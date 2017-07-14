@@ -833,27 +833,15 @@ class CubicalComplex(GenericCellComplex):
             self._complex = copy(C._complex)
             return
 
-        good_faces = []
-        maximal_cubes = [Cube(f) for f in maximal_faces]
-        for face in maximal_cubes:
-            # check whether each given face is actually maximal
-            face_is_maximal = True
-            if maximality_check:
-                faces_to_be_removed = []
-                for other in good_faces:
-                    if other.is_face(face):
-                        faces_to_be_removed.append(other)
-                    elif face_is_maximal:
-                        face_is_maximal = not face.is_face(other)
-                for x in faces_to_be_removed:
-                    good_faces.remove(x)
-            if face_is_maximal:
-                good_faces += [face]
-        # if no maximal faces, add the empty face as a facet
-        if len(maximal_cubes) == 0:
-            good_faces.append(Cube(()))
+        cubes = [Cube(f) for f in maximal_faces]
+        if maximality_check:
+            cubes = self.maximal_cubes(cubes)
+
+        # if no maximal cubes, add the empty cube as a facet
+        if len(cubes) == 0:
+            cubes.append(Cube(()))
         # self._facets: tuple of facets
-        self._facets = tuple(good_faces)
+        self._facets = tuple(cubes)
         # self._cells: dictionary of dictionaries of faces.  The main
         # dictionary is keyed by subcomplexes, and each value is a
         # dictionary keyed by dimension.  This should be empty until
@@ -865,6 +853,30 @@ class CubicalComplex(GenericCellComplex):
         # complex from dim d-1 to dim d, take the transpose of this
         # one.
         self._complex = {}
+
+    @staticmethod
+    def maximal_cubes(cubes):
+        """ Remove cubes that are faces of other cubes in this list
+
+        EXAMPLES::
+
+            TODO
+        """
+        maximal_cubes = []
+        for cube in cubes:
+            # check whether each given cube is actually maximal
+            cube_is_maximal = True
+            cubes_to_be_removed = []
+            for other in maximal_cubes:
+                if other.is_face(cube):
+                    cubes_to_be_removed.append(other)
+                elif cube_is_maximal:
+                    cube_is_maximal = not cube.is_face(other)
+            for x in cubes_to_be_removed:
+                maximal_cubes.remove(x)
+            if cube_is_maximal:
+                maximal_cubes += [cube]
+        return maximal_cubes
 
     def maximal_cells(self):
         """

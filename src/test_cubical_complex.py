@@ -10,13 +10,16 @@ from cubical_complex import Cube, CubicalComplex
 
 
 class Tests(unittest.TestCase):
-    def test_maximal_cubes(self):
-        TESTS = [
-            # ([], [Cube([])]),
-            # ([], [Cube([[0,0], [0,1]])]),
-        ]
-        for test in TESTS:
-            self.assertEqual(test[0], CubicalComplex.maximal_cubes(test[1]))
+    pass
+
+    # TODO:
+    # def test_maximal_cubes(self):
+    #     f = CubicalComplex.maximal_cubes
+    #     self.assertEqual([Cube([])], f([Cube([])]))
+    #     self.assertEqual([Cube([[0,0]])], f([Cube([[0,0]])]))
+    #     self.assertEqual([Cube([[0,0], [0,1]])], f([Cube([[0,0], [0,1]])]))
+    #     self.assertEqual([Cube([[0,0], [0,1]])],
+    #                      f(map(Cube, [[[0,0], [0,1]], [[0,0]], [[0,1]]])))
 
 
 def load_tests(loader, tests, pattern):
