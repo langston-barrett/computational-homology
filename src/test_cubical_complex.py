@@ -22,7 +22,9 @@ class Tests(unittest.TestCase):
 def load_tests(loader, tests, pattern):
     suite = unittest.TestSuite()
     suite.addTest(loader.loadTestsFromTestCase(Tests))
-    suite.addTests(doctest.DocTestSuite(cubical_complex))
+    suite.addTests(
+        doctest.DocTestSuite(
+            cubical_complex, optionflags=doctest.NORMALIZE_WHITESPACE))
     return suite
 
 
