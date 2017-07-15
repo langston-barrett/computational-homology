@@ -1,8 +1,6 @@
 #!/usr/bin/env python2
 
 from sage.all import *
-import functools
-import heapq
 
 
 def is_proper_face(cube1, cube2):
@@ -24,33 +22,6 @@ def is_proper_face(cube1, cube2):
     return cube1.is_face(cube2) and not cube1 == cube2
 
 
-@functools.total_ordering
-class HashCompare():
-    """ A wrapper object that allows comparison based on hashing
-
-    Examples:
-
-        >>> HashCompare((), None) == HashCompare((), ())
-        True
-
-        >>> HashCompare((), None) == HashCompare(5, "")
-        False
-
-        >>> HashCompare(3, None) <= HashCompare(5, "")
-        True
-    """
-
-    def __init__(self, obj, extra_data):
-        self.obj = obj
-        self.h = hash(obj)
-        self.extra = extra_data
-
-    __eq__ = lambda self, other: self.h == other.h
-    __lt__ = lambda self, other: self.h < other.h
-    __repr__ = lambda self: repr(self.to_tuple())
-    to_tuple = lambda self: (self.obj, self.extra)
-
-
 def free_faces(cubical_set):
     """ Return the free faces of a cubical complex
 
@@ -65,38 +36,17 @@ def free_faces(cubical_set):
         >>> get([([0, 0], [0, 0])])
         []
     """
-
-    # Example 2.62 of [KMM]:
-    heap = []
+    table = dict()
     for cube in cubical_set.maximal_cells():
-        heap += [HashCompare(f, cube) for f in cube.faces()]
+        for face in cube.faces():
+            try:
+                table[face].append(cube)
+            except KeyError:
+                table[face] = [cube]
 
-    heapq.heapify(heap)
-    free = []
-    is_free = True  # the current cube is, as far as we know, free
-
-    # Get the first cube from the heap. If there's none left, we're done.
-    try:
-        cube = heapq.heappop(heap)
-    except IndexError:
-        return free
-
-    while True:
-        # Get the next cube. If there's none left, return what we've got.
-        try:
-            next = heapq.heappop(heap)
-        except IndexError:  # cube is the last element of the heap
-            return free + ([cube.to_tuple()] if is_free else [])
-
-        # This cube is the proper face of more than one maximal cube
-        if cube == next:
-            is_free = False
-
-        elif is_free:
-            free.append(cube.to_tuple())  # unpack HashCompare object
-            is_free = True
-
-        cube = next
+    # Only return the free faces, i.e. those that are face of a single cube
+    return [(face, cubes[0]) for face, cubes in table.items()
+            if len(cubes) == 1]
 
 
 def collapse(cubical_complex, free_face, maximal_face):
