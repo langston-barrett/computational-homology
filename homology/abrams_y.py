@@ -220,7 +220,7 @@ def downstream_cubes(point_config, T, lookup):
     return cubes
 
 
-def the_complex(n):
+def the_complex(n, maximality_check=True):
     """ Build the cubical complex that is the Abrams-discretized configuration
     space of n vertices on the Y graph.
 
@@ -250,7 +250,7 @@ def the_complex(n):
     for point_config in iterate_over_conf(T, n):
         cubes.extend(downstream_cubes(point_config, T, lookup_))
 
-    return CubicalComplex(cubes, maximality_check=False)
+    return CubicalComplex(cubes, maximality_check=maximality_check)
 
 
 if __name__ == "__main__":

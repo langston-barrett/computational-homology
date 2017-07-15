@@ -64,6 +64,7 @@ reflected in the fact that they have isomorphic homology groups.
    page instead.
 """
 from __future__ import print_function, absolute_import
+from six.moves import zip
 
 from copy import copy
 from sage.homology.cell_complex import GenericCellComplex

@@ -8,7 +8,7 @@ def is_proper_face(cube1, cube2):
 
     Example 2.8 from Kaczynki, Mischaikow, and Mrozek:
 
-        >>> from cubical_complex import Cube
+        >>> from homology.cubical_complex import Cube
         >>> Q = Cube([[1,2], [1]])     # [1,2] x [1,1]
         >>> P = Cube([[1,2], [1, 2]])  # [1,2] x [1,2]
         >>> is_proper_face(Q, P)
@@ -31,7 +31,7 @@ def free_faces(cubical_set):
 
     A point has no free faces:
 
-        >>> from cubical_complex import Cube, CubicalComplex
+        >>> from homology.cubical_complex import Cube, CubicalComplex
         >>> get = lambda x: map(lambda i: i[0], free_faces(CubicalComplex(x)))
         >>> get([([0, 0], [0, 0])])
         []
@@ -74,7 +74,7 @@ def collapse_all(cubical_complex):
     remove all non-maximal faces at once with the constructor in the return
     statement.
 
-        >>> from cubical_complex import Cube, CubicalComplex
+        >>> from homology.cubical_complex import Cube, CubicalComplex
         >>> collapse_all(CubicalComplex([Cube([])]))
         Cubical complex with 0 vertices and 1 cube
 
