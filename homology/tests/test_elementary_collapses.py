@@ -32,14 +32,3 @@ def test_collapse():
     line = ([0, 0], [0, 1])
     assert CubicalComplex(
         [([0, 0], [1, 1])]) == collapse_all(CubicalComplex([line]))
-
-
-from homology.abrams_y import the_complex
-
-def test_benchmark_uncollapsed(benchmark):
-    c = the_complex(4, maximality_check=False)
-    benchmark(c.homology)
-
-def test_benchmark_collapsed(benchmark):
-    c_reduced = collapse_all(the_complex(4, maximality_check=False))
-    benchmark(c_reduced.homology)

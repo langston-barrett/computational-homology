@@ -12,4 +12,4 @@ if ! type -p sage &> /dev/null; then
   exit
 fi
 
-sage --python setup.py test
+sage --python setup.py test |& tee test_log

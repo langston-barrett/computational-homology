@@ -5,8 +5,8 @@ from cubical_complex import CubicalComplex
 import itertools
 
 # Ensure we've got chomp
-# from sage.interfaces.chomp import have_chomp
-# assert have_chomp() == True
+from sage.interfaces.chomp import have_chomp
+assert have_chomp() == True
 
 
 def lookup(n):

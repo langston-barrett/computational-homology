@@ -49,7 +49,7 @@ def free_faces(cubical_set):
             if len(cubes) == 1]
 
 
-def collapse(cubical_complex, free_face, maximal_face):
+def collapse(cubical_complex, free_face, maximal_face, maximality_check=True):
     """ Collapse maximal_face by free_face
 
     We make a new cubical complex with all the same faces except maximal_face
@@ -63,11 +63,13 @@ def collapse(cubical_complex, free_face, maximal_face):
     assert maximal_face in cubical_complex.maximal_cells()
     assert free_face in maximal_face.faces()
 
-    return CubicalComplex([c for c in cubical_complex if c != maximal_face] +
-                          [f for f in maximal_face.faces() if f != free_face])
+    return CubicalComplex(
+        [c for c in cubical_complex if c != maximal_face] +
+        [f for f in maximal_face.faces() if f != free_face],
+        maximality_check=maximality_check)
 
 
-def collapse_all(cubical_complex):
+def collapse_all(cubical_complex, maximality_check=True):
     """ Perform all elementary collapses possible on a cubical complex
 
     This implementation is faster than calling collapse many times, because we
@@ -97,4 +99,4 @@ def collapse_all(cubical_complex):
         # re-added if they are not themselves free faces.
         collapsed.append(free)
         faces += [f for f in cube.faces() if f not in collapsed]
-    return CubicalComplex(faces)
+    return CubicalComplex(faces, maximality_check=maximality_check)
