@@ -9,7 +9,7 @@ RUN [ "apt-get", "install", "-y", "-qq", "unzip" ]
 # Python dependencies
 USER sage
 ENV HOME /home/sage
-RUN [ "sage", "--pip", "install", "pytest", "pytest-runner", "pytest-benchmark", "pytest-xdist" ]
+RUN [ "sage", "--pip", "install", "pytest", "pytest-runner", "pytest-benchmark" ]
 RUN [ "sage", "--pip", "install", "hypothesis" ]
 
 # Get CHOMP
