@@ -9,7 +9,7 @@ let self = pkgs.callPackage ./default.nix { };
 in with pkgs; with pkgs.python3Packages; buildPythonPackage {
   name = self.name;
 
-  buildInputs = self.check_inputs ++ self.propagatedBuildInputs ++ [
+  buildInputs = self.propagatedBuildInputs ++ [
     # Documentation
     sphinx
 

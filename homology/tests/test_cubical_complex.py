@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- mode: python -*-
 
-from sage.all import *
+# from sage.all import *
 from homology import cubical_complex
 from homology.cubical_complex import Cube, CubicalComplex
 

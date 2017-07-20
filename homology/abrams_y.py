@@ -42,7 +42,7 @@ def lookup(n):
         [(0, 1, 0), (0, 0, 0), (1, 0, 0), (0, 0, 1)]
 
         >>> import random
-        >>> n = random.randint(0, 100)
+        >>> n = random.randint(1, 100)
         >>> lookup(n)[n-1]
         (0, 0, 0)
 
@@ -83,7 +83,7 @@ def generate_tree(n):
         ([1], [2, 3], [], [])
 
         >>> import random
-        >>> n = random.randint(0, 100)
+        >>> n = random.randint(1, 100)
         >>> assert generate_tree(n)[n-1] == [n, 2*n-1]
     """
     assert n > 0

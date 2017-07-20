@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- mode: python -*-
 
-from sage.all import *
+# from sage.all import *
 from homology import abrams_y
 import pytest
 

@@ -1634,6 +1634,10 @@ class CubicalComplex(GenericCellComplex):
             base_ring = QQ
         return algebraic_topological_model(self, base_ring)
 
+    # TODO: delete me
+    def _repr_(self):
+        return str(self.maximal_cells())
+
     def _chomp_repr_(self):
         r"""
         String representation of self suitable for use by the CHomP

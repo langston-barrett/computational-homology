@@ -12,4 +12,5 @@ if ! type -p sage &> /dev/null; then
   exit
 fi
 
-sage --python setup.py test |& tee test_log
+sage --python setup.py test |& tee test.log
+# sage --python homology/plot.py |& tee test.log
