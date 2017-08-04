@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """A setuptools based setup module.
 
 See:
