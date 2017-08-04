@@ -1,29 +1,36 @@
+# -*- coding: utf-8 -*-
 import hypothesis
-import pytest
-import random
+import functools
 
-from sage.rings.integer_ring import IntegerRing
-from sage.homology.homology_group import HomologyGroup
 from homology.abrams_y import the_complex
-from homology.elementary_collapses import add_maximal, face_dict, face_dict_to_complex, get_free_face, collapse, collapse_all
+from homology.elementary_collapses import add_maximal, face_dict, face_dict_to_complex, get_free_face, collapse_all
 from homology.cubical_complex import Cube, CubicalComplex
 from homology.tests.cubical_hypothesis import random_cube, random_complex, random_interval
 
 # For debugging functions that aren't working
-import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.FileHandler(filename="debug.log", mode="w"))
+# import logging
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
+# logger.addHandler(logging.FileHandler(filename="debug.log", mode="w"))
+
+# Increase these for more thorough, but longer tests
+MAX_EMBED = 20
+MAX_CUBES = 25
+given_complex = functools.partial(
+    random_complex,
+    max_embed=MAX_EMBED,
+    max_cubes=MAX_CUBES,
+    maximality_check=True)
 
 
-@hypothesis.given(random_cube(min_dimension=1))
+@hypothesis.given(random_cube(min_dimension=1, max_embed=5))
 def test_add_maximal(cube):
     assert len(add_maximal(dict(), cube)) > 0
 
 
 @hypothesis.given(
     random_complex(
-        max_embed=100, max_cubes=10, maximality_check=True))
+        max_embed=5, max_cubes=10, maximality_check=True))
 def test_face_dict(complex):
     """\
      1. None of the primary faces of maximal cubes are themselves maximal
@@ -46,9 +53,7 @@ def test_collapse_degenerate_interval(interval):
     assert complex == collapse_all(complex)
 
 
-@hypothesis.given(
-    random_complex(
-        max_embed=100, max_cubes=10, maximality_check=True))
+@hypothesis.given(given_complex())
 def test_face_d_to_complex(complex):
     """ \
     1. Test that the maximality check is extraneous
@@ -76,24 +81,33 @@ def compare_homology(c1, c2):
     #         assert v.order() == 1
 
 
-def test_compare_homology():
-    compare_homology(
-        CubicalComplex([Cube([[0, 0]])]).homology(),
-        CubicalComplex([Cube([[0, 1]])]).homology())
+@hypothesis.given(random_cube(max_embed=MAX_EMBED, min_dimension=1))
+def test_get_free_face(cube):
+    """ All elementary cubes have free faces """
+    assert get_free_face(
+        face_dict(CubicalComplex([cube]))) is not False
 
 
+# TODO: this is slow
+# @hypothesis.given(given_complex())
 @hypothesis.given(
     random_complex(
-        max_embed=5, max_cubes=10, maximality_check=True))
+        max_embed=5, max_cubes=20, maximality_check=True))
 @hypothesis.example(CubicalComplex([Cube([(0, 1), (0, 1), (0, 1)])]))  # I^3
-def test_collapse_all(complex):
+def test_collapse_all(cubical_complex):
+    collapsed = collapse_all(cubical_complex)
+
+    # This doesn't belong here, but it's efficient, so ¯\_(ツ)_/¯
+    assert get_free_face(face_dict(collapsed)) is False
+
     compare_homology(
-        complex.homology(algorithm="no_chomp"),
-        collapse_all(complex).homology(algorithm="no_chomp"))
+        cubical_complex.homology(algorithm="no_chomp"),
+        collapsed.homology(algorithm="no_chomp"))
 
 
-def test_collapse_all():
+def test_collapse_all_the_complex():
     for i in [2, 3]:
         comp = the_complex(i)
-        assert comp.homology(algorithm="auto") == collapse_all(comp).homology(
-            algorithm="auto")
+        compare_homology(
+            comp.homology(algorithm="auto"),
+            collapse_all(comp).homology(algorithm="auto"))

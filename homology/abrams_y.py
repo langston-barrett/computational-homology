@@ -1,12 +1,18 @@
 #!/usr/bin/env python2
 
 from sage.all import *
-from cubical_complex import CubicalComplex
+import cubical_complex
 import itertools
+import logging
+import collections
 
 # Ensure we've got chomp
 from sage.interfaces.chomp import have_chomp
-assert have_chomp() == True
+assert have_chomp() is True
+
+# Logging configuration: by default, produce no output
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def lookup(n):
@@ -43,9 +49,13 @@ def lookup(n):
 
         >>> import random
         >>> n = random.randint(1, 100)
-        >>> lookup(n)[n-1]
+        >>> lookup_ = lookup(n)
+        >>> lookup_[n-1]
         (0, 0, 0)
 
+      * The label-to-coordinate mapping should be unique:
+
+        >>> assert len(frozenset(lookup_)) == len(lookup_)
     """
 
     assert n > 0
@@ -85,6 +95,10 @@ def generate_tree(n):
         >>> import random
         >>> n = random.randint(1, 100)
         >>> assert generate_tree(n)[n-1] == [n, 2*n-1]
+        >>> generate_tree(n)[2*n-2]  # end of leg 1
+        []
+        >>> generate_tree(n)[3*n-3]  # end of leg 2
+        []
     """
     assert n > 0
 
@@ -118,11 +132,10 @@ def iterate_over_conf(T, n):
        # >>> list(gen)[:3] # First three items
        # [[0, 1], [0, 2], [0, 3]]
     """
-    # Lookup table shouldn't be []
+    # Labels table shouldn't be []
     assert T != []
 
-    iterator_list = [xrange(len(T))] * n
-    for point_config in itertools.product(*iterator_list):
+    for point_config in itertools.product(xrange(len(T)), repeat=n):
         if len(set(point_config)) == n:  # points all distinct
             yield point_config
 
@@ -160,14 +173,28 @@ def downstream_moves(point_config, T):
         >>> downstream_moves([2, 3], generate_tree(2))
         [[None], [None]]
 
+       In general, points at the ends of legs can't move anywhere:
+
+        >>> import random
+        >>> n = random.randint(3, 100)
+        >>> moves = downstream_moves(range(n-1) + [2*n-2], generate_tree(n))
+        >>> moves[n-1]  # end of leg 1
+        [None]
+        >>> moves = downstream_moves(range(n-1) + [3*n-3], generate_tree(n))
+        >>> moves[n-1]  # end of leg 2
+        [None]
+
     """
     assert T != []
     assert point_config != []
+    # no two points can be at the same location (in the non-2-equal setting)
+    assert len(point_config) == len(set(point_config))
 
     output = []
-    pointconfig_set = set(point_config)
+    point_config_set = frozenset(point_config)  # sets have O(1) lookup (hash)
     for p in point_config:
-        downstream = [u for u in T[p] if u not in pointconfig_set]
+        # We can move anywhere that there isn't already a point
+        downstream = [pos for pos in T[p] if pos not in point_config_set]
         if downstream == []:
             output.append([None])
         else:
@@ -177,8 +204,14 @@ def downstream_moves(point_config, T):
 
     return output
 
+# We "tag" the downstream cubes with their origin for debugging. If we know
+# what point_config and move inspired the addition of a cube to the Abrams
+# discretized configuration space, then we can more easily figure out where
+# things went wrong.
+MoveCube = collections.namedtuple("MoveCube", ["point_config", "move", "cube"])
 
-def downstream_cubes(point_config, T, lookup):
+
+def downstream_cubes(point_config, T):
     """\
     Builds the highest-dimensional cubes (in the Abrams-discretized
     configuration space) that result from performing moves at the same time.
@@ -189,40 +222,56 @@ def downstream_cubes(point_config, T, lookup):
        and moving 0 to 1 and 2 to 5.
 
        TODO: why this output?
-       TODO: since this is where the cubes come from, this is most likely the
-       hotspot for optimization.
+       TODO: this _doesn't_ only construct maximal cubes
 
-        >>> downstream_cubes([0, 2], generate_tree(2), lookup(2))
-        [[[0, 0], [0, 1], [0, 0], [1, 1], [0, 0], [0, 0]]]
+        # >>> downstream_cubes([0, 2], generate_tree(2))
+        # [[[0, 0], [0, 1], [0, 0], [1, 1], [0, 0], [0, 0]]]
 
     See also:
       * http://doc.sagemath.org/html/en/reference/homology/sage/homology/cubical_complex.html
-      * http://doc.sagemath.org/html/en/reference/misc/sage/misc/mrange.html
     """
+    assert point_config != []
+    assert T != []
+
+    lookup_ = lookup(len(point_config))
+
     cubes = []
-    for combination in itertools.product(*downstream_moves(point_config, T)):
+    # This product contains all possible combinations of moves
+    for move in itertools.product(*downstream_moves(point_config, T)):
         new_cube = []
-        for (coordinate, point) in zip(combination, point_config):
-            embedded_coords = lookup[point]
-            if coordinate == None:  # this point doesn't move in this cube
+        for (next_pos, current_pos) in zip(move, point_config):
+            # This point's current position in R^3
+            embedded_coords = lookup_[current_pos]
+            # This point doesn't move, so the intervals are trivial
+
+            # TODO: what's going on here??
+            if next_pos is None:
                 intervals = [[u, u] for u in embedded_coords]
             else:
-                downstream_embedded = lookup[coordinate]
+                # This point's position in R^3 after the move
+                next_embedded_coords = lookup_[next_pos]
                 intervals = [
-                    sorted([u, v])
-                    for (u, v) in zip(embedded_coords, downstream_embedded)
+                    sorted((u, v))
+                    for (u, v) in zip(embedded_coords, next_embedded_coords)
                 ]
-            new_cube.extend(intervals)
-        cubes.append(new_cube)
+            new_cube.extend(intervals)  # (each cube has 3n intervals)
+
+        # Make a new "tagged" cube
+        cubes.append(
+            MoveCube(point_config, move, cubical_complex.Cube(new_cube)))
 
     assert cubes != []
 
     return cubes
 
 
-def the_complex(n, maximality_check=True):
+def the_complex(n, maximality_check=True, logger=logger):
     """ Build the cubical complex that is the Abrams-discretized configuration
     space of n vertices on the Y graph.
+
+    The maximality_check _should be_ set to False by default because we
+    intentionally only add maximal cells to the complex with downstream_moves.
+    This is not currently the case.
 
     Examples:
 
@@ -244,25 +293,36 @@ def the_complex(n, maximality_check=True):
         {0: 0, 1: Z^13, 2: 0, 3: 0}
 
     """
-    lookup_ = lookup(n)
+    assert n > 0
+
     T = generate_tree(n)
     cubes = []
+
+    # If any of the points are at the ends of the legs, then the
+    # generated cube will be a face of one already generated.
     for point_config in iterate_over_conf(T, n):
-        cubes.extend(downstream_cubes(point_config, T, lookup_))
+        logger.debug("Generating downstream_cubes for {}".format(point_config))
+        downstream = downstream_cubes(point_config, T)
 
-    return CubicalComplex(cubes, maximality_check=maximality_check)
+        # for down in downstream:
+        #     for cube in cubes:
+        #         if down.cube.is_face(cube.cube):
+        #             try:
+        #                 assert 2 * n - 2 in point_config or 3 * n - 3 in point_config
+        #             except AssertionError:
+        #                 print("ERRR: the first contains the second")
+        #                 print("cube.point_config: {}".format(cube.point_config))
+        #                 print("cube.move: {}".format(cube.move))
+        #                 print("cube.cube: {}".format(cube.cube))
+        #                 print("down.point_config: {}".format(down.point_config))
+        #                 print("down.move: {}".format(down.move))
+        #                 print("down.cube: {}".format(down.cube))
+        #                 raise
 
+        cubes.extend(downstream)
 
-if __name__ == "__main__":
-    print(the_complex(4))
-    # n = 4
-    # lookup_ = lookup(n)
-    # T = generate_tree(n)
-    # cubes = []
-    # for point_config in iterate_over_conf(T, n):
-    #     cubes.extend(downstream_cubes(point_config, T, lookup_))
+    cubes = map(lambda t: t.cube, cubes)
+    downstream = map(lambda x: x.cube, downstream)
 
-    # import cProfile
-    # cProfile.run("CubicalComplex(cubes)")
-    # import doctest
-    # doctest.testmod()
+    return cubical_complex.CubicalComplex(
+        cubes, maximality_check=maximality_check)

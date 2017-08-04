@@ -15,7 +15,7 @@ from functools import reduce
 import random  # TODO: delete me
 import logging
 
-# Logging configuraiton: by default, produce no output
+# Logging configuration: by default, produce no output
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
@@ -226,21 +226,27 @@ def get_free_face(face_d, logger=logger):
         Either a key of face_d, or None if there are no faces in face_d.
 
         >>> get_free_face(dict())
-        None
+        False
+
+        >>> from homology.cubical_complex import Cube, CubicalComplex
+        >>> get_free_face(face_dict(CubicalComplex([Cube([(0,1)])])))
+        [1,1]
 
     TODO: tests and examples
     """
-    maximal_dimension = 0
-    maximal_free = None
+    maximal_dimension = -1
+    maximal_free = False
     for face, cubes in face_d.items():
         if face is not None and len(cubes) == 1:
             new_dimension = face.dimension()
+            logger.debug("Dimension of {} is {}".format(face, new_dimension))
             if new_dimension > maximal_dimension:
+                logger.debug("HERE")
                 maximal_dimension = new_dimension
                 maximal_free = face
 
     logger.debug("Returning free face {}".format(maximal_free))
-    return None
+    return maximal_free
 
 
 def collapse_all(cubical_complex, maximality_check=True, logger=logger):
@@ -273,12 +279,22 @@ def collapse_all(cubical_complex, maximality_check=True, logger=logger):
         ...
         >>> assert SQUARE == collapse_all(SQUARE)
 
+     * It removes _a lot_ of cubes:
+
+        >>> from homology.abrams_y import the_complex
+        >>> c = the_complex(3)
+        >>> c
+        Cubical complex with 210 vertices and 756 cubes
+
+        >>> collapse_all(c)
+        Cubical complex with 148 vertices and 308 cubes
+
     """
     logger.debug("*** Collapsing all in {}".format(cubical_complex))
     face_set = set(cubical_complex.maximal_cells())
     face_d = face_dict(face_set)
     free = get_free_face(face_d)
-    while free is not None:  # Up to 2^n loops, if acyclic?
+    while free is not False:  # Up to 2^n loops, if acyclic?
         face_d = collapse(face_d, free, logger=logger)
         free = get_free_face(face_d) # O(dn)
 
