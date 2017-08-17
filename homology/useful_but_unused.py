@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 def is_proper_face(cube1, cube2):
     """ Is the first cube a proper face of the second?
 
@@ -72,3 +73,50 @@ def test_collapse_single(cubical_complex):
         compare_homology(cubical_complex.homology(), complex_.homology())
         free = get_free_face(face_d)
 '''
+
+
+def orient(G):
+    """\
+    Give an orientation to (undirected) G such that there is a single free
+    vertex with an out degree of 1, and all edges point "outwards" from this
+    vertex.
+
+    Example:
+     * The graph  *---*------*   might get assigned   *→ →* → → →*
+                      |      |                            ↓      ↓
+                      |      |                            ↓      ↓
+                      *---*  *                            * → *  *
+    """
+    assert G.is_undirected()
+    assert G.is_tree()
+
+    # Find a free vertex
+    free = None
+    for vertex, degree in enumerate(G.degree_iterator()):
+        if degree == 0:
+            free = vertex
+            break
+
+    # All trees must have at least one free vertex
+    assert free is not None
+
+    # Construct a new digraph where all nodes are "downstream" from the free
+    # vertex
+    new_digraph = dict()
+    to_visit = [free]
+    while to_visit != []:
+        visiting = to_visit.pop()
+        new_neighbors = [n for n in visiting.neighbors_iterator()
+                         if n not in new_digraph]
+
+        new_digraph[visiting] = new_neighbors
+        to_visit.append(new_neighbors)
+
+    to_return = digraph.DiGraph(data=new_digraph, format="dict_of_lists",
+                                immutable=True)
+
+    assert to_return.order() == G.order()
+    assert to_return.size() == G.size()
+    assert len(filter(lambda deg: deg == 1, G.out_degree())) == 1
+
+    return to_return

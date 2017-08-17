@@ -1,7 +1,7 @@
-import hypothesis
+""" Hypothesis strategies for generating cubes and cubical complexes """
+
 from hypothesis import strategies
 from homology.cubical_complex import Cube, CubicalComplex
-""" Hypothesis strategies for generating cubes and cubical complexes """
 
 
 @strategies.composite

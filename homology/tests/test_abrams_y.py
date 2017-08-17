@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# -*- mode: python -*-
+# -*- coding: utf-8 -*-
 
 # from sage.all import *
 from homology import abrams_y

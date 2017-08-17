@@ -8,6 +8,8 @@ RUN [ "apt-get", "install", "-y", "-qq", "unzip" ]
 
 # Python dependencies
 USER sage
+
+RUN [ "sage", "--pip", "install", "networkx" ]
 ENV HOME /home/sage
 RUN [ "sage", "--pip", "install", "pytest", "pytest-runner", "pytest-benchmark", "pytest-xdist" ]
 RUN [ "sage", "--pip", "install", "hypothesis" ]

@@ -1,6 +1,18 @@
 #!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 """
-TODO document the dict format
+The data format for a cubical complex here (commonly referred to as face_d) is
+a dictionary. The keys are the primary faces of the complex's maximal cells,
+and the values are lists of maximal cells of which the key is a face. Thus, for
+the cubical complex that consists only of the interval [0, 1] x [0, 0], the
+dictionary would look like the following:
+
+.. code-block:: python
+
+    {
+      [0, 0] x [0, 0]: [0, 1] x [0, 0]  # the key is the point (0, 0)
+      [1, 1] x [0, 0]: [0, 1] x [0, 0]  # the key is the point (1, 0)
+    }
 
  * n is the number of (maximal) cubes in the complex
  * d is their maximal dimension
@@ -51,9 +63,9 @@ def add_maximal(face_d, cube):
 
        The picture is like this:
 
-         [0,0] x [1,1] ->  *
-                           |
-         [0,0] x [0,0] ->  *--*
+         [0,0] x [1,1] →  *
+                          |
+         [0,0] x [0,0] →  *--*
 
      * A cube has six faces:
 
@@ -102,9 +114,11 @@ def face_dict(maximal_cells):
 
        The picture is like this:
 
-         [0,0] x [1,1] ->  *
-                           |
-         [0,0] x [0,0] ->  *--*
+         [0,0] x [1,1] →  *
+                          |
+         [0,0] x [0,0] →  *--*
+                              ↑
+                        [1,1] x [0,0]
     """
     try:  # See if it's a cubical complex
         maximal_cells = set(maximal_cells.maximal_cells())
@@ -156,7 +170,7 @@ def collapse(face_d, free_face, logger=logger):
        This is the corresponding picture:
 
         *--*--*                                           *--*--*
-        |xx|xx| --- collapse via RHS ([2,2] x [0,1]) ---> |xx|
+        |xx|xx| →→→ collapse via RHS ([2,2] x [0,1]) →→→→ |xx|
         *--*--*                                           *--*--*
 
       *

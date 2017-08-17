@@ -95,6 +95,7 @@ def generate_tree(n):
         >>> import random
         >>> n = random.randint(1, 100)
         >>> assert generate_tree(n)[n-1] == [n, 2*n-1]
+        >>> # TODO: this fails on input "1"
         >>> generate_tree(n)[2*n-2]  # end of leg 1
         []
         >>> generate_tree(n)[3*n-3]  # end of leg 2
