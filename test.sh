@@ -16,3 +16,6 @@ export PYTHONPATH=$PYTHONPATH:$PWD
 python2 -m compileall homology
 sage --python setup.py test |& tee test.log
 # sage --python homology/benchmarks/profiling.py |& tee test.log
+
+# Cleanup
+rm -rf computational_homology.egg-info

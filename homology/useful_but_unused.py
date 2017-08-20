@@ -120,3 +120,68 @@ def orient(G):
     assert len(filter(lambda deg: deg == 1, G.out_degree())) == 1
 
     return to_return
+
+
+def _permutation_to_configuration(permutation, G, edge_lookup):
+    """ Given a permutation, give back a relabeling of vertices and edges
+
+    Returns: 2-tuple of (vertex relabeling dictionary, edge relabeling dictionary)
+
+    Runtime: O(V+E+n)
+
+    Examples:
+        >>> from sage.graphs.graph import Graph
+        >>> _permutation_to_configuration((0, 1), Graph([(0, 1)]), {})
+        ({0: (0, 0), 1: (1, 1)}, {(0, 1): []})
+
+        >>> _permutation_to_configuration((0, 2), Graph([(0, 1)]), {2: (0, 1)})
+        ({0: (0, 0), 1: (1, None)}, {(0, 1): [(1, 2)]})
+    """
+    vertex_relabeling = {v: (v, None) for v in G.vertices()}
+    edge_relabeling = {e: [] for e in G.edges(labels=False)}
+
+    for point, position in enumerate(permutation):
+        if position < G.order():  # point is on a vertex
+            vertex_relabeling[position] = (position, point)
+
+        else:
+            try:
+                edge_relabeling[edge_lookup[position]].append((point, position))
+            except KeyError:
+                logger.error("lookup: {}".format(lookup))
+                logger.error("position: {}".format(position))
+                logger.error("u, v: {}, {}".format(u, v))
+                logger.error("vertices: {}".format(H.vertices()))
+                raise
+
+    return (vertex_relabeling, edge_relabeling)
+
+
+class HashableGraph(Graph):
+    """ A subclass of Sage's Graph which includes labels in its hash
+
+     * Sage default behavior:
+
+        >>> IGraph = lambda *args: Graph(*args, immutable=True)
+        >>> hash(IGraph([(0, 1)])) == hash(IGraph([(0, 1)]))
+        True
+        >>> hash(IGraph([(0, 1, "x")])) == hash(IGraph([(0, 1, "y")]))
+        True
+
+     * HashableGraph:
+
+        >>> hash(HashableGraph([(0, 1)])) == hash(HashableGraph([(0, 1)]))
+        True
+        >>> hash(HashableGraph([(0, 1, "x")])) == hash(HashableGraph([(0, 1, "y")]))
+        False
+    """
+
+    def __hash__(self):
+        try:
+            return hash(frozenset(self.vertices() + self.edges(labels=True)))
+
+        # If the labels were unhashable (probably lists), make them frozensets
+        except TypeError as e:
+            edges = map(lambda t: (t[0], t[1], frozenset(t[2])),
+                        self.edges(labels=True))
+            return hash(frozenset(self.vertices() + edges))
