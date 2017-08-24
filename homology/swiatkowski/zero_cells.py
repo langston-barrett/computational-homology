@@ -16,25 +16,25 @@ default_logger.addHandler(logging.NullHandler())
 def subdivide(n, G):
     """ Give labels to the branched vertices and edges of G.
 
-    Each edge is given a label that is a ``frozenset`` of length n, ordered by the
-    usual ``<``. Vertices are already labeled in G. This subdivision mirrors
-    what happens in the Abrams model.
+    Each edge is given a label that is a pair (start, end). This represents the
+    interval [start, end] in the integers. Vertices are already labeled in G.
+    This subdivision mirrors what happens in the Abrams model.
 
         >>> from sage.graphs.graph import Graph
         >>> subdivide(1, Graph({})).edges(labels=True)
         []
 
         >>> subdivide(1, Graph([(0, 1)])).edges(labels=True)  # G := 0--1
-        [(0, 1, frozenset([2]))]
+        [(0, 1, (2, 2))]
 
         >>> subdivide(2, Graph([(0, 1)])).edges(labels=True)  # G := 0--1
-        [(0, 1, frozenset([2, 3]))]
+        [(0, 1, (2, 3))]
 
-        >>> subdivide(2, Graph([(0, 1), (1, 2), (2, 0)])).edges(labels=True)
-        [(0, 1, frozenset([3, 4])), ..., (1, 2, frozenset([8, 7]))]
+        >>> subdivide(3, Graph([(0, 1), (1, 2), (2, 0)])).edges(labels=True)
+        [(0, 1, (3, 5)), ..., (1, 2, (9, 11))]
     """
     return edge_label_fold(
-        lambda label, acc: (frozenset(xrange(acc, acc + n)), acc + n),
+        lambda label, acc: ((acc, acc + n - 1), acc + n),
         G.order(), G)[0]
 
 
@@ -71,12 +71,14 @@ def _permutation_to_edge_relabel(permutation, G):
     Runtime: O(En)
     """
     inverted = invert_permutation(permutation)
-    for u, v, labels in G.edges(labels=True):
+    for u, v, endpoints in G.edges(labels=True):
         new_label = []
-        for label in labels:
+        # The interval on the edge is inclusive, so we have to add 1 to the end
+        for label in xrange(endpoints[0], endpoints[1] + 1):
             # If a label is a key in the inverted permutation, there is a
             # point on it. Thus, we should append that point to the label.
             try:
+                # TODO: replace edge labels with their endpoints in subdivision
                 new_label.append(inverted[label])
             except KeyError:
                 pass
@@ -134,7 +136,6 @@ def zero_cells(n, G, logger=default_logger):
 
     """
     logger.debug("n: {}".format(n))
-
     G = subdivide(n, G)
     logger.debug("Graph: {}".format(G))
 
@@ -144,24 +145,21 @@ def zero_cells(n, G, logger=default_logger):
     labels = list(labels)
     logger.debug("Labels: {}".format(labels))
 
-    # We'll yield a copy of G with the appropriate labels
-    H_ = sage.all.copy(G)
-
-    perms = itertools.permutations(labels, n)
-    perms = list(perms)
-    logger.debug("Permutations: {}".format(list(perms)))
-
     # Loop through all n-tuples of point positions
     # Gather necessary relabelings of H
     relabeling_set = set()
-    for perm in perms:
+    for perm in itertools.permutations(labels, n):
         vertex_relabel = _permutation_to_vertex_relabel(perm, G)
-        edge_relabel = _permutation_to_edge_relabel(perm, G)
+        # We need to make a set out of the edge relabel because it is a
+        # generator object, whose hash doesn't reflect its content.
+        edge_relabel = frozenset(_permutation_to_edge_relabel(perm, G))
         relabeling_set.add((vertex_relabel, edge_relabel))
+
+    logger.debug("Relabeling set: {}".format(relabeling_set))
 
     # Only unique relabelings will be yielded
     for (vertex_relabel, edge_relabel) in relabeling_set:
-        H = sage.all.copy(H_)
+        H = sage.all.copy(G)
 
         for (u, v, new_label) in edge_relabel:
             H.set_edge_label(u, v, new_label)

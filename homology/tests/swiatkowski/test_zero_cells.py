@@ -21,10 +21,13 @@ logger.addHandler(logging.FileHandler(filename="debug.log", mode="w"))
                   random_graph(max_vertices=10, max_edges=20))
 @hypothesis.example(0, Graph([[0, 1]]))
 def test_subdivide(n, graph):
+    """\
+    Each edge should have n labels assigned to it
+    """
     subdivided = subdivide(n, graph)
     assert subdivided.is_isomorphic(graph)
-    for (u, v, label) in subdivided.edges(labels=True):
-        assert len(label) == n
+    for (u, v, endpoints) in subdivided.edges(labels=True):
+        assert len(xrange(endpoints[0], endpoints[1] + 1)) == n
 
 
 @hypothesis.given(strategies.integers(min_value=3, max_value=25))
@@ -35,12 +38,14 @@ def test_zero_cells_star(n):
     """
     assert sum(1 for _ in zero_cells(1, sage.all.graphs.StarGraph(n))) == n + 1
 
-@hypothesis.given(strategies.integers(min_value=0, max_value=6))
-def test_zero_cells_star(n):
+
+@hypothesis.given(strategies.integers(min_value=0, max_value=1))
+#@hypothesis.given(strategies.integers(min_value=0, max_value=6))
+def test_zero_cells_interval(n):
     """\
     There are P(n, n) = n! configurations of a n points on the interval.
     """
-    assert sum(1 for _ in zero_cells(n, Graph([(0, 1)]))) == factorial(n)
+    assert sum(1 for _ in zero_cells(n, Graph([(0, 1)]), logger=logger)) == factorial(n)
 
 
 @hypothesis.given(strategies.integers(min_value=0, max_value=2),
@@ -54,7 +59,7 @@ def test_zero_cells(n, graph):
     configurations are just assignments of labels on G, they should be
     isomorphic to G.
     """
-    for configuration in zero_cells(n, graph, logger=logger):
+    for configuration in zero_cells(n, graph):
 
         # Gather a list of points on vertices
         on_vertices = []
