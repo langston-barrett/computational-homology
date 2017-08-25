@@ -143,7 +143,7 @@ def zero_cells(n, G, logger=default_logger):
 
     # A list of every available label on this graph. Construction is O(n*E).
     branched = (v for v, deg in zip(G.vertices(), G.degree()) if deg >= 3)
-    labels = itertools.chain(branched_vertices, *G.edge_labels())
+    labels = itertools.chain(branched, *G.edge_labels())
     labels = list(labels)
     logger.debug("Labels: {}".format(labels))
 

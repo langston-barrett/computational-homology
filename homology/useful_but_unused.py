@@ -157,31 +157,31 @@ def _permutation_to_configuration(permutation, G, edge_lookup):
     return (vertex_relabeling, edge_relabeling)
 
 
-class HashableGraph(Graph):
-    """ A subclass of Sage's Graph which includes labels in its hash
+# class HashableGraph(Graph):
+#     """ A subclass of Sage's Graph which includes labels in its hash
 
-     * Sage default behavior:
+#      * Sage default behavior:
 
-        >>> IGraph = lambda *args: Graph(*args, immutable=True)
-        >>> hash(IGraph([(0, 1)])) == hash(IGraph([(0, 1)]))
-        True
-        >>> hash(IGraph([(0, 1, "x")])) == hash(IGraph([(0, 1, "y")]))
-        True
+#         >>> IGraph = lambda *args: Graph(*args, immutable=True)
+#         >>> hash(IGraph([(0, 1)])) == hash(IGraph([(0, 1)]))
+#         True
+#         >>> hash(IGraph([(0, 1, "x")])) == hash(IGraph([(0, 1, "y")]))
+#         True
 
-     * HashableGraph:
+#      * HashableGraph:
 
-        >>> hash(HashableGraph([(0, 1)])) == hash(HashableGraph([(0, 1)]))
-        True
-        >>> hash(HashableGraph([(0, 1, "x")])) == hash(HashableGraph([(0, 1, "y")]))
-        False
-    """
+#         >>> hash(HashableGraph([(0, 1)])) == hash(HashableGraph([(0, 1)]))
+#         True
+#         >>> hash(HashableGraph([(0, 1, "x")])) == hash(HashableGraph([(0, 1, "y")]))
+#         False
+#     """
 
-    def __hash__(self):
-        try:
-            return hash(frozenset(self.vertices() + self.edges(labels=True)))
+#     def __hash__(self):
+#         try:
+#             return hash(frozenset(self.vertices() + self.edges(labels=True)))
 
-        # If the labels were unhashable (probably lists), make them frozensets
-        except TypeError as e:
-            edges = map(lambda t: (t[0], t[1], frozenset(t[2])),
-                        self.edges(labels=True))
-            return hash(frozenset(self.vertices() + edges))
+#         # If the labels were unhashable (probably lists), make them frozensets
+#         except TypeError as e:
+#             edges = map(lambda t: (t[0], t[1], frozenset(t[2])),
+#                         self.edges(labels=True))
+#             return hash(frozenset(self.vertices() + edges))

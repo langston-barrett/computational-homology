@@ -52,5 +52,5 @@ def one_cells(zero_cells, logger=default_logger):
     """ Given the 0-cells of a graph, what are the 1-cells? """
     assert all(map(lambda g: not g.is_directed(), zero_cells))
 
-    for zero_cell in zero_cells:
+    for zero_cell in map(lambda g: g.minimum_outdegree_orientation(), zero_cells):
         moves = get_moves_from(zero_cell)
