@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """\
-Generate the k-cells, or "moves", of n points on a graph in the Swiatkowski
+Generate the k-cells, or "moves", of n points on a graph in the Świątkowski
 model.
 """
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """\
-Generate the 1-cells, or movements of a single particle, in the Swiatkowski
+Generate the 1-cells, or movements of a single particle, in the Świątkowski
 model.
 
 The 1-cells are represented as...wait for it...a graph! The 0-cells are
@@ -27,6 +27,36 @@ def get_moves_of_particle(zero_cell, particle, position):
 
     Outputs: ???
     """
+    if len(position) == 2:  # we're on a branched vertex
+        # TODO
+
+    if len(position) == 3:  # we're on an edge
+        label = position[2]
+
+        move_to = None
+        # If we're at the first position, we can move to the initial vertex
+        if label[0] == particle:
+            move_to = position[0]
+
+        # If we're at the last postition, we can move to the terminal vertex
+        else if label[len(label)-1] == particle:
+            move_to = position[1]
+
+        else:  # Otherwise, we have nowhere to go!
+            return []
+
+        if move_to is not None:
+            try:               # is the vertex an int (unoccupied)?
+                _ = position[0] + 1
+                copy = zero_cell.copy(immutable=False)
+                copy.relabel({position[0]: (position[0], particle)})
+                return [copy]
+            except TypeError:  # the vertex is a tuple (occuplied)!
+                pass
+
+
+    else:
+        raise TypeError("position should be a 2- or 3-tuple")
 
 
 def get_moves_from(zero_cell):
@@ -44,13 +74,16 @@ def get_moves_from(zero_cell):
             pass
 
     for u, v, label in zero_cell.edges(labels=True):
-        # TODO
-        pass
+        for particle in label:
+            yield get_moves_of_particle(zero_cell, particle, (u, v, label))
 
 
 def one_cells(zero_cells, logger=default_logger):
     """ Given the 0-cells of a graph, what are the 1-cells? """
     assert all(map(lambda g: not g.is_directed(), zero_cells))
 
-    for zero_cell in map(lambda g: g.minimum_outdegree_orientation(), zero_cells):
+    # We're assuming that the order of orientations is deterministic and based
+    # on the graph structure, not random nor based on labels. Thus, each 0-cell
+    # should get the same orientation.
+    for zero_cell in map(lambda g: next(g.orientations()), zero_cells):
         moves = get_moves_from(zero_cell)
